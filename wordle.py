@@ -5,7 +5,6 @@ import random
 import os
 from collections import Counter
 import string
-import pygame
 import json
 import hashlib
 import datetime
@@ -61,21 +60,6 @@ def score_guess(guess, target):
             result[i] = 1
             counts[guess[i]] -= 1
     return result
-
-# Initialize pygame mixer for sound effects
-pygame.mixer.init()
-
-# Sound file paths
-CLICK_SOUND = "click.wav"
-DING_SOUND = "ding.wav"
-BUZZ_SOUND = "buzz.wav"
-WIN_SOUND = "win.wav"
-
-def play_sound(sound):
-    try:
-        pygame.mixer.Sound(sound).play()
-    except Exception:
-        pass
 
 def get_daily_word(words):
     today = datetime.date.today().isoformat()
@@ -499,31 +483,26 @@ class WordleApp(tk.Frame):
             self.current_letters[self.col] = ch
             self.tiles[self.row][self.col].config(text=ch)
             self.col += 1
-            play_sound(CLICK_SOUND)  # Play click sound
 
     def backspace(self):
         if self.col > 0:
             self.col -= 1
             self.current_letters[self.col] = ""
             self.tiles[self.row][self.col].config(text="")
-            play_sound(CLICK_SOUND)  # Play click sound
 
     def submit_guess(self):
         if self.col != COLS:
             self._update_status("Not enough letters.")
-            play_sound(BUZZ_SOUND)
-            self._shake_row(self.row)  # Shake for not enough letters
+            self._shake_row(self.row)
             return
         guess = "".join(self.current_letters).lower()
         if guess not in self.allowed_words:
             self._update_status("Not in word list.")
-            play_sound(BUZZ_SOUND)
-            self._shake_row(self.row)  # Shake for invalid word
+            self._shake_row(self.row)
             return
         if guess in self.guessed_words:
             self._update_status("Already guessed.")
-            play_sound(BUZZ_SOUND)
-            self._shake_row(self.row)  # Shake for duplicate
+            self._shake_row(self.row)
             return
 
         # Hard mode enforcement
@@ -531,13 +510,11 @@ class WordleApp(tk.Frame):
             missing = [ch for ch in self.hard_letters if ch not in guess]
             if missing:
                 self._update_status(f"Hard Mode: Must use {', '.join(missing).upper()}!")
-                play_sound(BUZZ_SOUND)
                 self._shake_row(self.row)
                 return
 
         self.guessed_words.add(guess)
         marks = score_guess(guess, self.target)
-        play_sound(DING_SOUND)
         self._flip_row_animation(self.row, marks, guess)
 
         # Update hard_letters for next guess
@@ -551,7 +528,6 @@ class WordleApp(tk.Frame):
             self.game_over = True
             self._update_status(f"Great! You guessed {self.target.upper()} ✅")
             self._highlight_active_row()
-            play_sound(WIN_SOUND)
             self.update_stats(win=True)
             self.show_win_dialog()
             return
