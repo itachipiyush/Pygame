@@ -165,48 +165,49 @@ if st.session_state.guesses and not st.session_state.game_over:
             st.info("No hints available!")
 
 if not st.session_state.game_over:
-    guess_input = st.text_input("Enter your guess:", max_chars=5, key="guess_input").lower()
-    submit_col, _ = st.columns([1, 3])
-    if submit_col.button("Submit Guess"):
-        if len(guess_input) != 5 or not guess_input.isalpha():
-            st.error("Please enter a valid 5-letter word.")
-        elif guess_input not in words:
-            st.error("Not in word list.")
-        elif any(g == guess_input for g in st.session_state.guesses):
-            st.error("Already guessed.")
-        elif hard_mode and st.session_state.hard_letters and any(l not in guess_input for l in st.session_state.hard_letters):
-            missing = [l.upper() for l in st.session_state.hard_letters if l not in guess_input]
-            st.error(f"Hard Mode: Must use {', '.join(missing)}!")
-        else:
-            marks = score_guess(guess_input, st.session_state.target)
-            st.session_state.guesses.append(guess_input)
-            st.session_state.marks.append(marks)
-            # Update hard letters for next guess
-            if hard_mode:
-                st.session_state.hard_letters = set()
-                for i in range(COLS):
-                    if marks[i] in (1, 2):
-                        st.session_state.hard_letters.add(guess_input[i])
-            if guess_input == st.session_state.target:
-                st.success(f"🎉 Great! You guessed {st.session_state.target.upper()} ✅")
-                st.session_state.game_over = True
-                stats["games"] += 1
-                stats["wins"] += 1
-                stats["streak"] += 1
-                stats["max_streak"] = max(stats["max_streak"], stats["streak"])
-                all_stats[player] = stats
-                save_all_stats(all_stats)
-                definition = get_definition(st.session_state.target)
-                st.info(f"**Meaning:** {definition}")
-            elif len(st.session_state.guesses) == ROWS:
-                st.error(f"😢 Out of tries. Answer: {st.session_state.target.upper()}")
-                st.session_state.game_over = True
-                stats["games"] += 1
-                stats["streak"] = 0
-                all_stats[player] = stats
-                save_all_stats(all_stats)
-                definition = get_definition(st.session_state.target)
-                st.info(f"**Meaning:** {definition}")
+    with st.form("guess_form", clear_on_submit=True):
+        guess_input = st.text_input("Enter your guess:", max_chars=5, key="guess_input").lower()
+        submitted = st.form_submit_button("Submit Guess")
+        if submitted:
+            if len(guess_input) != 5 or not guess_input.isalpha():
+                st.error("Please enter a valid 5-letter word.")
+            elif guess_input not in words:
+                st.error("Not in word list.")
+            elif any(g == guess_input for g in st.session_state.guesses):
+                st.error("Already guessed.")
+            elif hard_mode and st.session_state.hard_letters and any(l not in guess_input for l in st.session_state.hard_letters):
+                missing = [l.upper() for l in st.session_state.hard_letters if l not in guess_input]
+                st.error(f"Hard Mode: Must use {', '.join(missing)}!")
+            else:
+                marks = score_guess(guess_input, st.session_state.target)
+                st.session_state.guesses.append(guess_input)
+                st.session_state.marks.append(marks)
+                # Update hard letters for next guess
+                if hard_mode:
+                    st.session_state.hard_letters = set()
+                    for i in range(COLS):
+                        if marks[i] in (1, 2):
+                            st.session_state.hard_letters.add(guess_input[i])
+                if guess_input == st.session_state.target:
+                    st.success(f"🎉 Great! You guessed {st.session_state.target.upper()} ✅")
+                    st.session_state.game_over = True
+                    stats["games"] += 1
+                    stats["wins"] += 1
+                    stats["streak"] += 1
+                    stats["max_streak"] = max(stats["max_streak"], stats["streak"])
+                    all_stats[player] = stats
+                    save_all_stats(all_stats)
+                    definition = get_definition(st.session_state.target)
+                    st.info(f"**Meaning:** {definition}")
+                elif len(st.session_state.guesses) == ROWS:
+                    st.error(f"😢 Out of tries. Answer: {st.session_state.target.upper()}")
+                    st.session_state.game_over = True
+                    stats["games"] += 1
+                    stats["streak"] = 0
+                    all_stats[player] = stats
+                    save_all_stats(all_stats)
+                    definition = get_definition(st.session_state.target)
+                    st.info(f"**Meaning:** {definition}")
 
 if st.session_state.game_over:
     st.markdown("---")
